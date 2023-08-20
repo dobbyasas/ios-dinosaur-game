@@ -9,10 +9,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var score = 0
     
     override func didMove(to view: SKView) {
+        setupPhysics()
         setupDinosaur()
         setupGround()
         setupScore()
         spawnObstacles()
+        self.backgroundColor = SKColor.blue
     }
     
     struct PhysicsCategories {
@@ -21,9 +23,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         static let ground: UInt32 = 0x1 << 3
     }
     
+    func setupPhysics() {
+        physicsWorld.contactDelegate = self
+        physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
+    }
+    
     func setupDinosaur() {
         dinosaur = SKSpriteNode(imageNamed: "dinosaur")
-        
         dinosaur.position = CGPoint(x: dinosaur.size.width/2, y: ground.size.height + dinosaur.size.height/2)
         
         dinosaur.physicsBody = SKPhysicsBody(rectangleOf: dinosaur.size)
@@ -41,12 +47,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         ground.physicsBody = SKPhysicsBody(rectangleOf: ground.size)
         ground.physicsBody?.isDynamic = false
         ground.physicsBody?.categoryBitMask = PhysicsCategories.ground
-        addChild(ground)
         
+        addChild(ground)
     }
 
     func setupScore() {
         scoreLabel = SKLabelNode(fontNamed: "Arial")
+        scoreLabel.position = CGPoint(x: size.width / 2, y: size.height - 50)
+        scoreLabel.text = "Score: 0"
         addChild(scoreLabel)
     }
     
@@ -57,7 +65,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func spawnObstacles() {
         let createObstacle = SKAction.run {
-            let obstacle = SKSpriteNode(imageNamed: "obstacleImageName")
+            let obstacle = SKSpriteNode(imageNamed: "obstacle")
             obstacle.position = CGPoint(x: self.size.width + obstacle.size.width / 2, y: self.ground.size.height + obstacle.size.height / 2)
             obstacle.physicsBody = SKPhysicsBody(rectangleOf: obstacle.size)
             obstacle.physicsBody?.categoryBitMask = PhysicsCategories.obstacle
@@ -73,10 +81,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         let waitAction = SKAction.wait(forDuration: 2)
         let spawnSequence = SKAction.sequence([createObstacle, waitAction])
         let spawnForever = SKAction.repeatForever(spawnSequence)
+        
         run(spawnForever)
     }
 
-    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         dinosaurJump()
     }
@@ -100,6 +108,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func gameOver() {
         self.scene?.isPaused = true
+        // TODO: Show a "Game Over" label and a restart button
     }
 
+    func restartGame() {
+        for child in children {
+            if child.name == "obstacle" {
+                child.removeFromParent()
+            }
+        }
+
+        startGame()
+    }
 }
